@@ -7,7 +7,7 @@
 #include <aviutl_plugin_sdk/filter.h>
 
 const char* FILTER_NAME = "上限確認";
-const char* FILTER_INFORMATION = "上限確認 v0.0.0 by karoterra";
+const char* FILTER_INFORMATION = "上限確認 v0.1.0 by karoterra";
 
 const char* EXEDIT_NAME = "拡張編集";
 const char* EXEDIT_92 = "拡張編集(exedit) version 0.92 by ＫＥＮくん";

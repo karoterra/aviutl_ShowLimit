@@ -43,3 +43,7 @@ AviUtl の「表示」→「上限確認の表示」からウィンドウを表�
 詳細は [LICENSE](LICENSE) を参照してください。
 
 使用したライブラリ等については [CREDITS](CREDITS.md) を参照してください。
+
+## Change Log
+
+更新履歴は [CHANGELOG](CHANGELOG.md) を参照してください。
