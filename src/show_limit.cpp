@@ -6,6 +6,12 @@
 #include <sstream>
 #include <iomanip>
 
+using AviUtl::FilterPlugin;
+using AviUtl::InputPlugin;
+using AviUtl::OutputPlugin;
+using AviUtl::ColorPlugin;
+using AviUtl::SysInfo;
+
 const char* FILTER_NAME = "上限確認";
 const char* FILTER_INFORMATION = "上限確認 v0.1.0 by karoterra";
 
@@ -26,7 +32,13 @@ const size_t FIGURE_MAX = 0x4000;;
 const size_t TRANSITION_OFFSET = 0xba6d0;
 const size_t TRANSITION_MAX = 0x4000;
 
-using AviUtl::FilterPlugin;
+const size_t INPUT_COUNT_OFFSET = 0xb5ac4;
+const size_t OUTPUT_COUNT_OFFSET = 0x24b93c;
+const size_t COLOR_COUNT_OFFSET = 0xb5ac0;
+const size_t INPUT_COUNT_MAX = 32;
+const size_t OUTPUT_COUNT_MAX = 32;
+const size_t FILTER_COUNT_MAX = 96;
+const size_t COLOR_COUNT_MAX = 32;
 
 const FilterPlugin* g_exedit = nullptr;
 size_t g_anm_used = 0;
@@ -37,10 +49,15 @@ size_t g_tra_used = 0;
 size_t g_figure_used = 0;
 size_t g_transition_used = 0;
 
+size_t g_input_used = 0;
+size_t g_output_used = 0;
+size_t g_filter_used = 0;
+size_t g_color_used = 0;
+
 HWND g_list = NULL;
 
 FilterPlugin* GetExedit(FilterPlugin* fp) {
-    AviUtl::SysInfo si;
+    SysInfo si;
     fp->exfunc->get_sys_info(nullptr, &si);
     for (int i = 0; i < si.filter_n; i++) {
         FilterPlugin* fp1 = fp->exfunc->get_filterp(i);
@@ -49,6 +66,12 @@ FilterPlugin* GetExedit(FilterPlugin* fp) {
         }
     }
     return nullptr;
+}
+
+bool IsValidAviUtl(FilterPlugin* fp) {
+    SysInfo si;
+    fp->exfunc->get_sys_info(nullptr, &si);
+    return strcmp("1.10", si.info) == 0 && si.build == 11003;
 }
 
 size_t NamesBufLen(const char* buf, size_t size) {
@@ -65,6 +88,11 @@ size_t GetNamesBufUsed(size_t base, size_t offset, size_t size) {
     return NamesBufLen(buf, size);
 }
 
+uint32_t ReadUInt32(size_t base, size_t offset) {
+    auto p = reinterpret_cast<uint32_t*>(base + offset);
+    return *p;
+}
+
 void CheckLimit() {
     if (g_exedit == nullptr) return;
 
@@ -76,6 +104,15 @@ void CheckLimit() {
     g_tra_used = GetNamesBufUsed(base, TRA_OFFSET, TRA_MAX);
     g_figure_used = GetNamesBufUsed(base, FIGURE_OFFSET, FIGURE_MAX);
     g_transition_used = GetNamesBufUsed(base, TRANSITION_OFFSET, TRANSITION_MAX);
+
+    SysInfo si;
+    g_exedit->exfunc->get_sys_info(nullptr, &si);
+    g_filter_used = si.filter_n;
+
+    base = reinterpret_cast<size_t>(g_exedit->hinst_parent);
+    g_input_used = ReadUInt32(base, INPUT_COUNT_OFFSET);
+    g_output_used = ReadUInt32(base, OUTPUT_COUNT_OFFSET);
+    g_color_used = ReadUInt32(base, COLOR_COUNT_OFFSET);
 }
 
 void SetListItem(int row, const char* name, size_t used, size_t limit) {
@@ -166,11 +203,25 @@ bool CreateFilterWindow(FilterPlugin* fp) {
     SetListItem(4, "スクリプト名 TRA", g_tra_used, TRA_MAX);
     SetListItem(5, "図形名", g_figure_used, FIGURE_MAX);
     SetListItem(6, "トランジション名", g_transition_used, TRANSITION_MAX);
+    SetListItem(7, "入力プラグイン", g_input_used, INPUT_COUNT_MAX);
+    SetListItem(8, "出力プラグイン", g_output_used, OUTPUT_COUNT_MAX);
+    SetListItem(9, "フィルタプラグイン", g_filter_used, FILTER_COUNT_MAX);
+    SetListItem(10, "色変換プラグイン", g_color_used, COLOR_COUNT_MAX);
 
     return true;
 }
 
 BOOL func_init(FilterPlugin* fp) {
+    if (!IsValidAviUtl(fp)) {
+        MessageBox(
+            fp->hwnd,
+            "このAviUtlには対応していません",
+            FILTER_NAME,
+            MB_OK | MB_ICONERROR
+        );
+        return FALSE;
+    }
+
     g_exedit = GetExedit(fp);
     if (g_exedit == nullptr) {
         MessageBox(
@@ -190,7 +241,7 @@ BOOL func_exit(FilterPlugin* fp) {
 
 BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, AviUtl::EditHandle* editp, FilterPlugin* fp) {
     switch (message) {
-    case AviUtl::detail::FilterPluginWindowMessage::Init:
+    case AviUtl::detail::FilterPluginWindowMessage::ChangeActive:
         CheckLimit();
         CreateFilterWindow(fp);
         break;
@@ -205,7 +256,7 @@ AviUtl::FilterPluginDLL filter_src{
         | FilterPluginFlag::ExInformation
         | FilterPluginFlag::DispFilter | FilterPluginFlag::WindowSize,
     .x = 400,
-    .y = 200,
+    .y = 250,
     .name = const_cast<char*>(FILTER_NAME),
     .func_init = func_init,
     .func_exit = func_exit,
