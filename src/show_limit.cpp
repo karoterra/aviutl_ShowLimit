@@ -1,10 +1,10 @@
+#include <aviutl_exedit_sdk/aviutl.hpp>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <CommCtrl.h>
 #include <string>
 #include <sstream>
 #include <iomanip>
-#include <aviutl_plugin_sdk/filter.h>
 
 const char* FILTER_NAME = "上限確認";
 const char* FILTER_INFORMATION = "上限確認 v0.1.0 by karoterra";
@@ -26,7 +26,9 @@ const size_t FIGURE_MAX = 0x4000;;
 const size_t TRANSITION_OFFSET = 0xba6d0;
 const size_t TRANSITION_MAX = 0x4000;
 
-const FILTER* g_exedit = nullptr;
+using AviUtl::FilterPlugin;
+
+const FilterPlugin* g_exedit = nullptr;
 size_t g_anm_used = 0;
 size_t g_obj_used = 0;
 size_t g_scn_used = 0;
@@ -37,11 +39,11 @@ size_t g_transition_used = 0;
 
 HWND g_list = NULL;
 
-FILTER* GetExedit(FILTER* fp) {
-    SYS_INFO si;
+FilterPlugin* GetExedit(FilterPlugin* fp) {
+    AviUtl::SysInfo si;
     fp->exfunc->get_sys_info(nullptr, &si);
     for (int i = 0; i < si.filter_n; i++) {
-        auto fp1 = static_cast<FILTER*>(fp->exfunc->get_filterp(i));
+        FilterPlugin* fp1 = fp->exfunc->get_filterp(i);
         if (strcmp(fp1->name, EXEDIT_NAME) == 0 && strcmp(fp1->information, EXEDIT_92) == 0) {
             return fp1;
         }
@@ -109,7 +111,7 @@ void SetListItem(int row, const char* name, size_t used, size_t limit) {
     ListView_SetItem(g_list, &item);
 }
 
-bool CreateFilterWindow(FILTER* fp) {
+bool CreateFilterWindow(FilterPlugin* fp) {
     InitCommonControls();
 
     RECT rc;
@@ -168,7 +170,7 @@ bool CreateFilterWindow(FILTER* fp) {
     return true;
 }
 
-BOOL func_init(FILTER* fp) {
+BOOL func_init(FilterPlugin* fp) {
     g_exedit = GetExedit(fp);
     if (g_exedit == nullptr) {
         MessageBox(
@@ -182,13 +184,13 @@ BOOL func_init(FILTER* fp) {
     return TRUE;
 }
 
-BOOL func_exit(FILTER* fp) {
+BOOL func_exit(FilterPlugin* fp) {
     return TRUE;
 }
 
-BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void* editp, FILTER* fp) {
+BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, AviUtl::EditHandle* editp, FilterPlugin* fp) {
     switch (message) {
-    case WM_FILTER_INIT:
+    case AviUtl::detail::FilterPluginWindowMessage::Init:
         CheckLimit();
         CreateFilterWindow(fp);
         break;
@@ -196,10 +198,12 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, void* e
     return FALSE;
 }
 
-FILTER_DLL filter_src{
-    .flag = FILTER_FLAG_ALWAYS_ACTIVE | FILTER_FLAG_PRIORITY_LOWEST |
-        FILTER_FLAG_EX_INFORMATION |
-        FILTER_FLAG_DISP_FILTER | FILTER_FLAG_WINDOW_SIZE,
+using AviUtl::detail::FilterPluginFlag;
+
+AviUtl::FilterPluginDLL filter_src{
+    .flag = FilterPluginFlag::AlwaysActive | FilterPluginFlag::PriorityLowest
+        | FilterPluginFlag::ExInformation
+        | FilterPluginFlag::DispFilter | FilterPluginFlag::WindowSize,
     .x = 400,
     .y = 200,
     .name = const_cast<char*>(FILTER_NAME),
@@ -209,6 +213,6 @@ FILTER_DLL filter_src{
     .information = const_cast<char*>(FILTER_INFORMATION),
 };
 
-extern "C" __declspec(dllexport) FILTER_DLL * GetFilterTable(void) {
+extern "C" __declspec(dllexport) AviUtl::FilterPluginDLL * GetFilterTable(void) {
     return &filter_src;
 }
