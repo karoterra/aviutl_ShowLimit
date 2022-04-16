@@ -34,15 +34,17 @@ public:
         build_num_ = si.build;
     }
 
-    bool IsSupported() {
+    bool IsSupported() const {
         return build_num_ == kBuildNum110;
     }
 
     size_t GetInputNum() const {
+        if (!IsSupported()) return 0;
         return ReadUInt32(kInputCountOffset);
     }
 
     size_t GetOutputNum() const {
+        if (!IsSupported()) return 0;
         return ReadUInt32(kOutputCountOffset);
     }
 
@@ -53,6 +55,7 @@ public:
     }
 
     size_t GetColorNum() const {
+        if (!IsSupported()) return 0;
         return ReadUInt32(kColorCountOffset);
     }
 

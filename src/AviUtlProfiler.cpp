@@ -57,31 +57,31 @@ void AviUtlProfiler::WritePluginsProfile(std::ostream& dest, const PluginsOption
 
     auto base = reinterpret_cast<size_t>(hinst_);
 
-    dest << kBullet1 << "入力プラグイン\n";
-    auto inputs = reinterpret_cast<AviUtl::InputPlugin*>(base + kInputArrayOffset);
-    auto input_num = GetInputNum();
-    for (size_t i = 0; i < input_num; i++) {
-        if (HasFlag(inputs[i].flag, AviUtl::detail::InputPluginFlag::Builtin))
-            continue;
+    if (IsSupported()) {
+        dest << kBullet1 << "入力プラグイン\n";
+        auto inputs = reinterpret_cast<AviUtl::InputPlugin*>(base + kInputArrayOffset);
+        auto input_num = GetInputNum();
+        for (size_t i = 0; i < input_num; i++) {
+            if (HasFlag(inputs[i].flag, AviUtl::detail::InputPluginFlag::Builtin))
+                continue;
 
-        WritePluginData(dest, hasher, opt, aviutl_path,
-            inputs[i].name2, inputs[i].information2, inputs[i].path);
+            WritePluginData(dest, hasher, opt, aviutl_path,
+                inputs[i].name2, inputs[i].information2, inputs[i].path);
+        }
+        if (opt.enable_count == 1) dest << "\n";
+
+        dest << kBullet1 << "出力プラグイン\n";
+        auto outputs = reinterpret_cast<AviUtl::OutputPlugin*>(base + kOutputArrayOffset);
+        auto output_num = GetOutputNum();
+        for (size_t i = 0; i < output_num; i++) {
+            if (HasFlag(outputs[i].flag, AviUtl::detail::OutputPluginFlag::Builtin))
+                continue;
+
+            WritePluginData(dest, hasher, opt, aviutl_path,
+                outputs[i].name2, outputs[i].information2, outputs[i].path);
+        }
+        if (opt.enable_count == 1) dest << "\n";
     }
-    if (opt.enable_count == 1)
-        dest << "\n";
-
-    dest << kBullet1 << "出力プラグイン\n";
-    auto outputs = reinterpret_cast<AviUtl::OutputPlugin*>(base + kOutputArrayOffset);
-    auto output_num = GetOutputNum();
-    for (size_t i = 0; i < output_num; i++) {
-        if (HasFlag(outputs[i].flag, AviUtl::detail::OutputPluginFlag::Builtin))
-            continue;
-
-        WritePluginData(dest, hasher, opt, aviutl_path,
-            outputs[i].name2, outputs[i].information2, outputs[i].path);
-    }
-    if (opt.enable_count == 1)
-        dest << "\n";
 
     dest << kBullet1 << "フィルタプラグイン\n";
     auto filter_num = GetFilterNum();
@@ -98,14 +98,16 @@ void AviUtlProfiler::WritePluginsProfile(std::ostream& dest, const PluginsOption
     if (opt.enable_count == 1)
         dest << "\n";
 
-    dest << kBullet1 << "色変換プラグイン\n";
-    auto colors = reinterpret_cast<AviUtl::ColorPlugin*>(base + kColorArrayOffset);
-    auto color_num = GetColorNum();
-    for (size_t i = 0; i < color_num; i++) {
-        if (HasFlag(colors[i].flag, AviUtl::detail::ColorPluginFlag::Builtin))
-            continue;
+    if (IsSupported()) {
+        dest << kBullet1 << "色変換プラグイン\n";
+        auto colors = reinterpret_cast<AviUtl::ColorPlugin*>(base + kColorArrayOffset);
+        auto color_num = GetColorNum();
+        for (size_t i = 0; i < color_num; i++) {
+            if (HasFlag(colors[i].flag, AviUtl::detail::ColorPluginFlag::Builtin))
+                continue;
 
-        WritePluginData(dest, hasher, opt, aviutl_path,
-            colors[i].name, colors[i].information, colors[i].path);
+            WritePluginData(dest, hasher, opt, aviutl_path,
+                colors[i].name, colors[i].information, colors[i].path);
+        }
     }
 }

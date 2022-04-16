@@ -27,6 +27,8 @@ void WriteNamesBuffer(std::ostream& dest, const NamesBuffer& buffer) {
 
 void ExEditProfiler::WriteProfile(std::ostream& dest)
 {
+    if (!IsSupported()) return;
+
     WriteExEditDetail(dest);
     dest << "\n";
 

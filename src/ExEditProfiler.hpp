@@ -45,7 +45,7 @@ public:
         }
     }
 
-    bool IsSupported() {
+    bool IsSupported() const {
         return exedit_ != nullptr;
     }
 
@@ -83,6 +83,7 @@ private:
     AviUtl::FilterPlugin* exedit_;
 
     char* GetNamesBuffer(size_t offset) const {
+        if (!IsSupported()) return nullptr;
         return reinterpret_cast<char*>(reinterpret_cast<size_t>(exedit_->dll_hinst) + offset);
     }
 
@@ -96,6 +97,7 @@ private:
     }
 
     size_t GetNamesBufferUsed(size_t offset, size_t size) const {
+        if (!IsSupported()) return 0;
         auto buf = GetNamesBuffer(offset);
         return GetNamesBufferLength(buf, size);
     }

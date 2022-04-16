@@ -81,6 +81,8 @@ bool CreateFilterWindow(FilterPlugin* fp) {
     auto width = rc.right - rc.left;
     auto height = rc.bottom - rc.top;
 
+    DWORD style = NULL;
+
     constexpr int listHeight = 200;
     g_list = CreateWindowEx(
         0, WC_LISTVIEW, nullptr,
@@ -193,24 +195,25 @@ bool CreateFilterWindow(FilterPlugin* fp) {
     SendMessage(g_plugin_hash, BM_SETCHECK, BST_CHECKED, 0);
 
     // スクリプトグループ
+    style = WS_CHILD | WS_VISIBLE | BS_GROUPBOX
+        | (g_exedit_profiler.IsSupported() ? 0 : WS_DISABLED);
     hwnd = CreateWindowEx(
-        0, "BUTTON", "スクリプト",
-        WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
+        0, "BUTTON", "スクリプト", style,
         width / 2, listHeight, width / 2, height - listHeight,
         fp->hwnd, NULL, fp->dll_hinst, NULL
     );
     SetFont(hwnd);
 
+    style = WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON
+        | (g_exedit_profiler.IsSupported() ? 0 : WS_DISABLED);
     hwnd = CreateWindowEx(
-        0, "BUTTON", "クリップボードにコピー",
-        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        0, "BUTTON", "クリップボードにコピー", style,
         width / 2 + 10, listHeight + 20, width / 2 - 20, 18,
         fp->hwnd, reinterpret_cast<HMENU>(kIdScriptCopyButton), fp->dll_hinst, NULL
     );
     SetFont(hwnd);
     hwnd = CreateWindowEx(
-        0, "BUTTON", "ファイルに保存",
-        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        0, "BUTTON", "ファイルに保存", style,
         width / 2 + 10, listHeight + 40, width / 2 - 20, 18,
         fp->hwnd, reinterpret_cast<HMENU>(kIdScriptSaveButton), fp->dll_hinst, NULL
     );
@@ -253,26 +256,7 @@ PluginsOption GetPluginsOption() {
 
 BOOL func_init(FilterPlugin* fp) {
     g_aviutl_profiler.Init(fp);
-    if (!g_aviutl_profiler.IsSupported()) {
-        MessageBox(
-            fp->hwnd,
-            "このAviUtlには対応していません",
-            kFilterName,
-            MB_OK | MB_ICONERROR
-        );
-        return FALSE;
-    }
-
     g_exedit_profiler.Init(fp);
-    if (!g_exedit_profiler.IsSupported()) {
-        MessageBox(
-            fp->hwnd,
-            "対応する拡張編集が見つかりません。",
-            kFilterName,
-            MB_OK | MB_ICONERROR
-        );
-        return FALSE;
-    }
 
     g_filter = fp;
 
