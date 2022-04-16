@@ -1,119 +1,40 @@
-#include <aviutl_exedit_sdk/aviutl.hpp>
-#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <CommCtrl.h>
-#include <string>
-#include <sstream>
+
+#include <fstream>
 #include <iomanip>
+#include <sstream>
+#include <string>
 
+#include <aviutl.hpp>
+
+#include "Sha256Hasher.hpp"
+#include "AviUtlProfiler.hpp"
+#include "ExEditProfiler.hpp"
+
+using namespace std::literals::string_literals;
 using AviUtl::FilterPlugin;
-using AviUtl::InputPlugin;
-using AviUtl::OutputPlugin;
-using AviUtl::ColorPlugin;
-using AviUtl::SysInfo;
 
-const char* FILTER_NAME = "上限確認";
-const char* FILTER_INFORMATION = "上限確認 v0.1.0 by karoterra";
+constexpr int kIdPluginCopyButton = 1001;
+constexpr int kIdPluginSaveButton = 1002;
+constexpr int kIdScriptCopyButton = 1101;
+constexpr int kIdScriptSaveButton = 1102;
+constexpr int kIdList = 1900;
 
-const char* EXEDIT_NAME = "拡張編集";
-const char* EXEDIT_92 = "拡張編集(exedit) version 0.92 by ＫＥＮくん";
-const size_t ANM_OFFSET = 0xc1f08;
-const size_t ANM_MAX = 0x8000;
-const size_t OBJ_OFFSET = 0xce090;
-const size_t OBJ_MAX = 0x4000;
-const size_t SCN_OFFSET = 0xaef83;
-const size_t SCN_MAX = 0x8000;
-const size_t CAM_OFFSET = 0xd20d0;
-const size_t CAM_MAX = 0x2000;
-const size_t TRA_OFFSET = 0xca010;
-const size_t TRA_MAX = 0x4000;
-const size_t FIGURE_OFFSET = 0xa9a90;
-const size_t FIGURE_MAX = 0x4000;;
-const size_t TRANSITION_OFFSET = 0xba6d0;
-const size_t TRANSITION_MAX = 0x4000;
+const char* kFilterName = "上限確認";
+const char* kFilterInformation = "上限確認 v0.1.0 by karoterra";
 
-const size_t INPUT_COUNT_OFFSET = 0xb5ac4;
-const size_t OUTPUT_COUNT_OFFSET = 0x24b93c;
-const size_t COLOR_COUNT_OFFSET = 0xb5ac0;
-const size_t INPUT_COUNT_MAX = 32;
-const size_t OUTPUT_COUNT_MAX = 32;
-const size_t FILTER_COUNT_MAX = 96;
-const size_t COLOR_COUNT_MAX = 32;
+const FilterPlugin* g_filter = nullptr;
 
-const FilterPlugin* g_exedit = nullptr;
-size_t g_anm_used = 0;
-size_t g_obj_used = 0;
-size_t g_scn_used = 0;
-size_t g_cam_used = 0;
-size_t g_tra_used = 0;
-size_t g_figure_used = 0;
-size_t g_transition_used = 0;
-
-size_t g_input_used = 0;
-size_t g_output_used = 0;
-size_t g_filter_used = 0;
-size_t g_color_used = 0;
-
+HFONT g_font = NULL;
 HWND g_list = NULL;
+HWND g_plugin_name = NULL;
+HWND g_plugin_info = NULL;
+HWND g_plugin_path = NULL;
+HWND g_plugin_hash = NULL;
 
-FilterPlugin* GetExedit(FilterPlugin* fp) {
-    SysInfo si;
-    fp->exfunc->get_sys_info(nullptr, &si);
-    for (int i = 0; i < si.filter_n; i++) {
-        FilterPlugin* fp1 = fp->exfunc->get_filterp(i);
-        if (strcmp(fp1->name, EXEDIT_NAME) == 0 && strcmp(fp1->information, EXEDIT_92) == 0) {
-            return fp1;
-        }
-    }
-    return nullptr;
-}
-
-bool IsValidAviUtl(FilterPlugin* fp) {
-    SysInfo si;
-    fp->exfunc->get_sys_info(nullptr, &si);
-    return strcmp("1.10", si.info) == 0 && si.build == 11003;
-}
-
-size_t NamesBufLen(const char* buf, size_t size) {
-    size_t i;
-    for (i = 0; i < size; i++) {
-        if (buf[i] != '\0') continue;
-        if (buf[i + 1] == '\0') break;
-    }
-    return i;
-}
-
-size_t GetNamesBufUsed(size_t base, size_t offset, size_t size) {
-    auto buf = reinterpret_cast<const char*>(base + offset);
-    return NamesBufLen(buf, size);
-}
-
-uint32_t ReadUInt32(size_t base, size_t offset) {
-    auto p = reinterpret_cast<uint32_t*>(base + offset);
-    return *p;
-}
-
-void CheckLimit() {
-    if (g_exedit == nullptr) return;
-
-    auto base = reinterpret_cast<size_t>(g_exedit->dll_hinst);
-    g_anm_used = GetNamesBufUsed(base, ANM_OFFSET, ANM_MAX);
-    g_obj_used = GetNamesBufUsed(base, OBJ_OFFSET, OBJ_MAX);
-    g_scn_used = GetNamesBufUsed(base, SCN_OFFSET, SCN_MAX);
-    g_cam_used = GetNamesBufUsed(base, CAM_OFFSET, CAM_MAX);
-    g_tra_used = GetNamesBufUsed(base, TRA_OFFSET, TRA_MAX);
-    g_figure_used = GetNamesBufUsed(base, FIGURE_OFFSET, FIGURE_MAX);
-    g_transition_used = GetNamesBufUsed(base, TRANSITION_OFFSET, TRANSITION_MAX);
-
-    SysInfo si;
-    g_exedit->exfunc->get_sys_info(nullptr, &si);
-    g_filter_used = si.filter_n;
-
-    base = reinterpret_cast<size_t>(g_exedit->hinst_parent);
-    g_input_used = ReadUInt32(base, INPUT_COUNT_OFFSET);
-    g_output_used = ReadUInt32(base, OUTPUT_COUNT_OFFSET);
-    g_color_used = ReadUInt32(base, COLOR_COUNT_OFFSET);
-}
+AviUtlProfiler g_aviutl_profiler;
+ExEditProfiler g_exedit_profiler;
 
 void SetListItem(int row, const char* name, size_t used, size_t limit) {
     LVITEM item{
@@ -148,18 +69,24 @@ void SetListItem(int row, const char* name, size_t used, size_t limit) {
     ListView_SetItem(g_list, &item);
 }
 
+void SetFont(HWND hwnd) {
+    SendMessage(hwnd, WM_SETFONT, reinterpret_cast<WPARAM>(g_font), MAKELPARAM(TRUE, 0));
+}
+
 bool CreateFilterWindow(FilterPlugin* fp) {
     InitCommonControls();
 
     RECT rc;
     GetClientRect(fp->hwnd, &rc);
+    auto width = rc.right - rc.left;
+    auto height = rc.bottom - rc.top;
 
+    constexpr int listHeight = 200;
     g_list = CreateWindowEx(
         0, WC_LISTVIEW, nullptr,
         WS_CHILD | WS_VISIBLE | LVS_REPORT,
-        0, 0,
-        rc.right - rc.left, rc.bottom - rc.top,
-        fp->hwnd, NULL, fp->dll_hinst, NULL
+        0, 0, width, listHeight,
+        fp->hwnd, reinterpret_cast<HMENU>(kIdList), fp->dll_hinst, NULL
     );
     if (g_list == NULL) return false;
 
@@ -196,54 +123,223 @@ bool CreateFilterWindow(FilterPlugin* fp) {
     }
 
     // items
-    SetListItem(0, "スクリプト名 ANM", g_anm_used, ANM_MAX);
-    SetListItem(1, "スクリプト名 OBJ", g_obj_used, OBJ_MAX);
-    SetListItem(2, "スクリプト名 SCN", g_scn_used, SCN_MAX);
-    SetListItem(3, "スクリプト名 CAM", g_cam_used, CAM_MAX);
-    SetListItem(4, "スクリプト名 TRA", g_tra_used, TRA_MAX);
-    SetListItem(5, "図形名", g_figure_used, FIGURE_MAX);
-    SetListItem(6, "トランジション名", g_transition_used, TRANSITION_MAX);
-    SetListItem(7, "入力プラグイン", g_input_used, INPUT_COUNT_MAX);
-    SetListItem(8, "出力プラグイン", g_output_used, OUTPUT_COUNT_MAX);
-    SetListItem(9, "フィルタプラグイン", g_filter_used, FILTER_COUNT_MAX);
-    SetListItem(10, "色変換プラグイン", g_color_used, COLOR_COUNT_MAX);
+    SetListItem(0, "スクリプト名 ANM", g_exedit_profiler.GetAnmUsed(), ExEditProfiler::kAnmMax);
+    SetListItem(1, "スクリプト名 OBJ", g_exedit_profiler.GetObjUsed(), ExEditProfiler::kObjMax);
+    SetListItem(2, "スクリプト名 SCN", g_exedit_profiler.GetScnUsed(), ExEditProfiler::kScnMax);
+    SetListItem(3, "スクリプト名 CAM", g_exedit_profiler.GetCamUsed(), ExEditProfiler::kCamMax);
+    SetListItem(4, "スクリプト名 TRA", g_exedit_profiler.GetTraUsed(), ExEditProfiler::kTraMax);
+    SetListItem(5, "図形名", g_exedit_profiler.GetFigureUsed(), ExEditProfiler::kFigureMax);
+    SetListItem(6, "トランジション名", g_exedit_profiler.GetTransitionUsed(), ExEditProfiler::kTransitionMax);
+    SetListItem(7, "入力プラグイン", g_aviutl_profiler.GetInputNum(), AviUtlProfiler::kInputCountMax);
+    SetListItem(8, "出力プラグイン", g_aviutl_profiler.GetOutputNum(), AviUtlProfiler::kOutputCountMax);
+    SetListItem(9, "フィルタプラグイン", g_aviutl_profiler.GetFilterNum(), AviUtlProfiler::kFilterCountMax);
+    SetListItem(10, "色変換プラグイン", g_aviutl_profiler.GetColorNum(), AviUtlProfiler::kColorCountMax);
+
+    // プラグイングループ
+    HWND hwnd = CreateWindowEx(
+        0, "BUTTON", "プラグイン",
+        WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
+        0, listHeight, width / 2, height - listHeight,
+        fp->hwnd, NULL, fp->dll_hinst, NULL
+    );
+    SetFont(hwnd);
+
+    hwnd = CreateWindowEx(
+        0, "BUTTON", "クリップボードにコピー",
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        10, listHeight + 20, width / 2 - 20, 18,
+        fp->hwnd, reinterpret_cast<HMENU>(kIdPluginCopyButton), fp->dll_hinst, NULL
+    );
+    SetFont(hwnd);
+    hwnd = CreateWindowEx(
+        0, "BUTTON", "ファイルに保存",
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        10, listHeight + 40, width / 2 - 20, 18,
+        fp->hwnd, reinterpret_cast<HMENU>(kIdPluginSaveButton), fp->dll_hinst, NULL
+    );
+    SetFont(hwnd);
+
+    g_plugin_name = CreateWindowEx(
+        0, "BUTTON", "プラグイン名",
+        WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+        10, listHeight + 60, width / 2 - 20, 18,
+        fp->hwnd, NULL, fp->dll_hinst, NULL
+    );
+    SetFont(g_plugin_name);
+    SendMessage(g_plugin_name, BM_SETCHECK, BST_CHECKED, 0);
+    g_plugin_info = CreateWindowEx(
+        0, "BUTTON", "詳細情報",
+        WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+        10, listHeight + 80, width / 2 - 20, 18,
+        fp->hwnd, NULL, fp->dll_hinst, NULL
+    );
+    SetFont(g_plugin_info);
+    SendMessage(g_plugin_info, BM_SETCHECK, BST_CHECKED, 0);
+    g_plugin_path = CreateWindowEx(
+        0, "BUTTON", "ファイル名",
+        WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+        10, listHeight + 100, width / 2 - 20, 18,
+        fp->hwnd, NULL, fp->dll_hinst, NULL
+    );
+    SetFont(g_plugin_path);
+    SendMessage(g_plugin_path, BM_SETCHECK, BST_CHECKED, 0);
+    g_plugin_hash = CreateWindowEx(
+        0, "BUTTON", "SHA256ハッシュ",
+        WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+        10, listHeight + 120, width / 2 - 20, 18,
+        fp->hwnd, NULL, fp->dll_hinst, NULL
+    );
+    SetFont(g_plugin_hash);
+    SendMessage(g_plugin_hash, BM_SETCHECK, BST_CHECKED, 0);
+
+    // スクリプトグループ
+    hwnd = CreateWindowEx(
+        0, "BUTTON", "スクリプト",
+        WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
+        width / 2, listHeight, width / 2, height - listHeight,
+        fp->hwnd, NULL, fp->dll_hinst, NULL
+    );
+    SetFont(hwnd);
+
+    hwnd = CreateWindowEx(
+        0, "BUTTON", "クリップボードにコピー",
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        width / 2 + 10, listHeight + 20, width / 2 - 20, 18,
+        fp->hwnd, reinterpret_cast<HMENU>(kIdScriptCopyButton), fp->dll_hinst, NULL
+    );
+    SetFont(hwnd);
+    hwnd = CreateWindowEx(
+        0, "BUTTON", "ファイルに保存",
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+        width / 2 + 10, listHeight + 40, width / 2 - 20, 18,
+        fp->hwnd, reinterpret_cast<HMENU>(kIdScriptSaveButton), fp->dll_hinst, NULL
+    );
+    SetFont(hwnd);
 
     return true;
 }
 
+bool CopyToClipboard(std::string s) {
+    if (!OpenClipboard(g_filter->hwnd)) {
+        return false;
+    }
+    EmptyClipboard();
+
+    HGLOBAL hg = GlobalAlloc(GHND | GMEM_SHARE, s.length() + 1);
+    LPSTR buf = static_cast<LPSTR>(GlobalLock(hg));
+    lstrcpy(buf, s.c_str());
+    GlobalUnlock(hg);
+
+    SetClipboardData(CF_TEXT, hg);
+
+    CloseClipboard();
+    return true;
+}
+
+bool IsChecked(HWND hCheck) {
+    return SendMessage(hCheck, BM_GETCHECK, 0, 0) != FALSE;
+}
+
+PluginsOption GetPluginsOption() {
+    PluginsOption opt{
+        .enable_name = IsChecked(g_plugin_name),
+        .enable_info = IsChecked(g_plugin_info),
+        .enable_path = IsChecked(g_plugin_path),
+        .enable_hash = IsChecked(g_plugin_hash),
+    };
+    opt.Update();
+    return opt;
+}
+
 BOOL func_init(FilterPlugin* fp) {
-    if (!IsValidAviUtl(fp)) {
+    g_aviutl_profiler.Init(fp);
+    if (!g_aviutl_profiler.IsSupported()) {
         MessageBox(
             fp->hwnd,
             "このAviUtlには対応していません",
-            FILTER_NAME,
+            kFilterName,
             MB_OK | MB_ICONERROR
         );
         return FALSE;
     }
 
-    g_exedit = GetExedit(fp);
-    if (g_exedit == nullptr) {
+    g_exedit_profiler.Init(fp);
+    if (!g_exedit_profiler.IsSupported()) {
         MessageBox(
             fp->hwnd,
             "対応する拡張編集が見つかりません。",
-            FILTER_NAME,
+            kFilterName,
             MB_OK | MB_ICONERROR
         );
         return FALSE;
     }
+
+    g_filter = fp;
+
+    NONCLIENTMETRICS ncm{ .cbSize = sizeof(NONCLIENTMETRICS) };
+    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS), &ncm, 0);
+    g_font = CreateFontIndirect(&ncm.lfCaptionFont);
+
     return TRUE;
 }
 
 BOOL func_exit(FilterPlugin* fp) {
+    DeleteObject(g_font);
     return TRUE;
 }
 
 BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, AviUtl::EditHandle* editp, FilterPlugin* fp) {
     switch (message) {
     case AviUtl::detail::FilterPluginWindowMessage::ChangeActive:
-        CheckLimit();
         CreateFilterWindow(fp);
+        break;
+    case WM_COMMAND:
+        switch (LOWORD(wparam)) {
+        case kIdPluginCopyButton: {
+            std::ostringstream os;
+            auto opt = GetPluginsOption();
+            g_aviutl_profiler.WritePluginsProfile(os, opt);
+            CopyToClipboard(os.str());
+            break;
+        }
+        case kIdPluginSaveButton: {
+            char name[MAX_PATH];
+            if (fp->exfunc->dlg_get_save_name(name, "テキスト (*.txt)\0*.txt", "plugins.txt") != FALSE) {
+                try {
+                    std::ofstream ofs(name);
+                    auto opt = GetPluginsOption();
+                    g_aviutl_profiler.WritePluginsProfile(ofs, opt);
+                }
+                catch (const std::exception& e) {
+                    std::ostringstream os;
+                    os << '"' << name << "\"への書き込みに失敗しました。\n" << e.what();
+                    MessageBox(g_filter->hwnd, os.str().c_str(), kFilterName, MB_OK | MB_ICONERROR);
+                }
+            }
+            break;
+        }
+        case kIdScriptCopyButton: {
+            std::ostringstream os;
+            g_exedit_profiler.WriteProfile(os);
+            CopyToClipboard(os.str());
+            break;
+        }
+        case kIdScriptSaveButton: {
+            char name[MAX_PATH];
+            if (fp->exfunc->dlg_get_save_name(name, "テキスト (*.txt)\0*.txt", "scripts.txt") != FALSE) {
+                try {
+                    std::ofstream ofs(name);
+                    g_exedit_profiler.WriteProfile(ofs);
+                }
+                catch (const std::exception& e) {
+                    std::ostringstream os;
+                    os << '"' << name << "\"への書き込みに失敗しました。\n" << e.what();
+                    MessageBox(g_filter->hwnd, os.str().c_str(), kFilterName, MB_OK | MB_ICONERROR);
+                }
+            }
+            break;
+        }
+        }
         break;
     }
     return FALSE;
@@ -256,12 +352,12 @@ AviUtl::FilterPluginDLL filter_src{
         | FilterPluginFlag::ExInformation
         | FilterPluginFlag::DispFilter | FilterPluginFlag::WindowSize,
     .x = 400,
-    .y = 250,
-    .name = const_cast<char*>(FILTER_NAME),
+    .y = 390,
+    .name = const_cast<char*>(kFilterName),
     .func_init = func_init,
     .func_exit = func_exit,
     .func_WndProc = func_WndProc,
-    .information = const_cast<char*>(FILTER_INFORMATION),
+    .information = const_cast<char*>(kFilterInformation),
 };
 
 extern "C" __declspec(dllexport) AviUtl::FilterPluginDLL * GetFilterTable(void) {
