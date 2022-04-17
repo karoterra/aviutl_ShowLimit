@@ -32,6 +32,7 @@ HWND g_plugin_name = NULL;
 HWND g_plugin_info = NULL;
 HWND g_plugin_path = NULL;
 HWND g_plugin_hash = NULL;
+HWND g_script_output_default = NULL;
 
 AviUtlProfiler g_aviutl_profiler;
 ExEditProfiler g_exedit_profiler;
@@ -219,6 +220,16 @@ bool CreateFilterWindow(FilterPlugin* fp) {
     );
     SetFont(hwnd);
 
+    style = WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX
+        | (g_exedit_profiler.IsSupported() ? 0 : WS_DISABLED);
+    g_script_output_default = CreateWindowEx(
+        0, "BUTTON", "標準スクリプトを出力する", style,
+        width / 2 + 10, listHeight + 60, width / 2 - 20, 18,
+        fp->hwnd, NULL, fp->dll_hinst, NULL
+    );
+    SetFont(g_script_output_default);
+    SendMessage(g_script_output_default, BM_SETCHECK, BST_UNCHECKED, 0);
+
     return true;
 }
 
@@ -251,6 +262,13 @@ PluginsOption GetPluginsOption() {
         .enable_hash = IsChecked(g_plugin_hash),
     };
     opt.Update();
+    return opt;
+}
+
+ScriptsOption GetScriptsOption() {
+    ScriptsOption opt{
+        .output_default = IsChecked(g_script_output_default),
+    };
     return opt;
 }
 
@@ -304,7 +322,8 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, AviUtl:
         }
         case kIdScriptCopyButton: {
             std::ostringstream os;
-            g_exedit_profiler.WriteProfile(os);
+            auto opt = GetScriptsOption();
+            g_exedit_profiler.WriteProfile(os, opt);
             CopyToClipboard(os.str());
             break;
         }
@@ -313,7 +332,8 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, AviUtl:
             if (fp->exfunc->dlg_get_save_name(name, "テキスト (*.txt)\0*.txt", "scripts.txt") != FALSE) {
                 try {
                     std::ofstream ofs(name);
-                    g_exedit_profiler.WriteProfile(ofs);
+                    auto opt = GetScriptsOption();
+                    g_exedit_profiler.WriteProfile(ofs, opt);
                 }
                 catch (const std::exception& e) {
                     std::ostringstream os;

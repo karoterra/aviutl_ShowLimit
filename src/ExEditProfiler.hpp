@@ -5,6 +5,8 @@
 
 #include <aviutl.hpp>
 
+#include "ScriptsOption.hpp"
+
 class ExEditProfiler
 {
 public:
@@ -77,7 +79,7 @@ public:
         return GetNamesBufferUsed(kTransitionOffset, kTransitionMax);
     }
 
-    void WriteProfile(std::ostream& dest);
+    void WriteProfile(std::ostream& dest, const ScriptsOption& opt);
 
 private:
     AviUtl::FilterPlugin* exedit_;
