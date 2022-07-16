@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <string_view>
 #include <vector>
+#include <stdexcept>
 
 #include "Sha256Hasher.hpp"
 
@@ -26,10 +27,31 @@ void WritePluginData(
     const char* name, const char* info, const char* path)
 {
     std::vector<std::string> lines;
-    if (opt.enable_name) lines.push_back("名前: "s + name);
-    if (opt.enable_info) lines.push_back("詳細: "s + info);
-    if (opt.enable_path) lines.push_back("パス: "s + fs::relative(path, aviutl_path).string());
-    if (opt.enable_hash) lines.push_back("SHA256: "s + hasher.getFileHash(path));
+    if (opt.enable_name) {
+        lines.push_back("名前: ");
+        if (name != nullptr) lines.back().append(name);
+    }
+    if (opt.enable_info) {
+        lines.push_back("詳細: ");
+        if (info != nullptr) lines.back().append(info);
+    }
+    if (opt.enable_path) {
+        lines.push_back("パス: ");
+        if (path != nullptr) {
+            lines.back().append(fs::relative(path, aviutl_path).string());
+        }
+    }
+    if (opt.enable_hash) {
+        lines.push_back("SHA256: "s + hasher.getFileHash(path));
+        if (path != nullptr) {
+            try {
+                lines.back().append(hasher.getFileHash(path));
+            }
+            catch (const std::runtime_error& e) {
+                OutputDebugStringA(e.what());
+            }
+        }
+    }
 
     dest << kIndent << kBullet2 << lines[0] << "\n";
     for (size_t i = 1; i < lines.size(); i++) {
