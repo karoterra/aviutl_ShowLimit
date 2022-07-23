@@ -22,7 +22,7 @@ constexpr int kIdScriptSaveButton = 1102;
 constexpr int kIdList = 1900;
 
 const char* kFilterName = "上限確認";
-const char* kFilterInformation = "上限確認 v0.2.1 by karoterra";
+const char* kFilterInformation = "上限確認 v0.3.0 by karoterra";
 
 const FilterPlugin* g_filter = nullptr;
 
