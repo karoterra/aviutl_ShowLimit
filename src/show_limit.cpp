@@ -84,7 +84,7 @@ bool CreateFilterWindow(FilterPlugin* fp) {
 
     DWORD style = NULL;
 
-    constexpr int listHeight = 200;
+    int listHeight = static_cast<int>(height - 140);
     g_list = CreateWindowEx(
         0, WC_LISTVIEW, nullptr,
         WS_CHILD | WS_VISIBLE | LVS_REPORT,
@@ -133,10 +133,11 @@ bool CreateFilterWindow(FilterPlugin* fp) {
     SetListItem(4, "スクリプト名 TRA", g_exedit_profiler.GetTraUsed(), ExEditProfiler::kTraMax);
     SetListItem(5, "図形名", g_exedit_profiler.GetFigureUsed(), ExEditProfiler::kFigureMax);
     SetListItem(6, "トランジション名", g_exedit_profiler.GetTransitionUsed(), ExEditProfiler::kTransitionMax);
-    SetListItem(7, "入力プラグイン", g_aviutl_profiler.GetInputNum(), AviUtlProfiler::kInputCountMax);
-    SetListItem(8, "出力プラグイン", g_aviutl_profiler.GetOutputNum(), AviUtlProfiler::kOutputCountMax);
-    SetListItem(9, "フィルタプラグイン", g_aviutl_profiler.GetFilterNum(), AviUtlProfiler::kFilterCountMax);
-    SetListItem(10, "色変換プラグイン", g_aviutl_profiler.GetColorNum(), AviUtlProfiler::kColorCountMax);
+    SetListItem(7, "EXA/EXO", g_exedit_profiler.GetExaExoUsed(), ExEditProfiler::kExaExoMax);
+    SetListItem(8, "入力プラグイン", g_aviutl_profiler.GetInputNum(), AviUtlProfiler::kInputCountMax);
+    SetListItem(9, "出力プラグイン", g_aviutl_profiler.GetOutputNum(), AviUtlProfiler::kOutputCountMax);
+    SetListItem(10, "フィルタプラグイン", g_aviutl_profiler.GetFilterNum(), AviUtlProfiler::kFilterCountMax);
+    SetListItem(11, "色変換プラグイン", g_aviutl_profiler.GetColorNum(), AviUtlProfiler::kColorCountMax);
 
     // プラグイングループ
     HWND hwnd = CreateWindowEx(

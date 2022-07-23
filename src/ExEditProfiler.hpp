@@ -31,6 +31,9 @@ public:
     static constexpr size_t kTransitionOffset = 0xba6d0;
     static constexpr size_t kTransitionMax = 0x4000;
 
+    static constexpr size_t kExaExoOffset = 0x135c70;
+    static constexpr size_t kExaExoMax = 0x10000;
+
     static constexpr std::string_view kExEditName{ "拡張編集" };
     static constexpr std::string_view kExEdit92{ "拡張編集(exedit) version 0.92 by ＫＥＮくん" };
 
@@ -77,6 +80,10 @@ public:
 
     size_t GetTransitionUsed() const {
         return GetNamesBufferUsed(kTransitionOffset, kTransitionMax);
+    }
+
+    size_t GetExaExoUsed() const {
+        return GetNamesBufferUsed(kExaExoOffset, kExaExoMax);
     }
 
     void WriteProfile(std::ostream& dest, const ScriptsOption& opt);
