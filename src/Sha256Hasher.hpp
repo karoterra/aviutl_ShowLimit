@@ -2,6 +2,7 @@
 
 #include <Windows.h>
 #include <string>
+#include <filesystem>
 
 class Sha256Hasher
 {
@@ -9,7 +10,7 @@ public:
     Sha256Hasher();
     ~Sha256Hasher();
 
-    std::string getFileHash(const char* path);
+    std::string getFileHash(const std::filesystem::path& path);
 
 private:
     BCRYPT_ALG_HANDLE _hAlg;
