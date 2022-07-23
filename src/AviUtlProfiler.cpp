@@ -23,7 +23,7 @@ bool HasFlag(T x, T flag)
 
 void WritePluginData(
     std::ostream& dest, Sha256Hasher& hasher, const PluginsOption& opt,
-    const std::string& aviutl_path,
+    const fs::path& aviutl_dir,
     const char* name, const char* info, const char* path)
 {
     std::vector<std::string> lines;
@@ -38,11 +38,11 @@ void WritePluginData(
     if (opt.enable_path) {
         lines.push_back("パス: ");
         if (path != nullptr) {
-            lines.back().append(fs::relative(path, aviutl_path).string());
+            lines.back().append(fs::relative(path, aviutl_dir).generic_string());
         }
     }
     if (opt.enable_hash) {
-        lines.push_back("SHA256: "s + hasher.getFileHash(path));
+        lines.push_back("SHA256: ");
         if (path != nullptr) {
             try {
                 lines.back().append(hasher.getFileHash(path));
@@ -66,13 +66,14 @@ void AviUtlProfiler::WritePluginsProfile(std::ostream& dest, const PluginsOption
     Sha256Hasher hasher;
 
     dest << kBullet1 << "AviUtl\n";
-    std::string aviutl_path = GetAviUtlPath();
+    fs::path aviutl_path = GetAviUtlPath();
+    fs::path aviutl_dir = aviutl_path.parent_path();
     AviUtl::SysInfo si;
     exfunc_->get_sys_info(nullptr, &si);
     dest << kIndent << "バージョン: " << si.info << "\n";
     dest << kIndent << "ビルド: " << si.build << "\n";
-    dest << kIndent << "パス: " << aviutl_path << "\n";
-    dest << kIndent << "SHA256: " << hasher.getFileHash(aviutl_path.c_str()) << "\n\n";
+    dest << kIndent << "パス: " << aviutl_path.generic_string() << "\n";
+    dest << kIndent << "SHA256: " << hasher.getFileHash(aviutl_path) << "\n\n";
 
     if (opt.enable_count == 0)
         return;
@@ -87,7 +88,7 @@ void AviUtlProfiler::WritePluginsProfile(std::ostream& dest, const PluginsOption
             if (HasFlag(inputs[i].flag, AviUtl::detail::InputPluginFlag::Builtin))
                 continue;
 
-            WritePluginData(dest, hasher, opt, aviutl_path,
+            WritePluginData(dest, hasher, opt, aviutl_dir,
                 inputs[i].name2, inputs[i].information2, inputs[i].path);
         }
         if (opt.enable_count == 1) dest << "\n";
@@ -99,7 +100,7 @@ void AviUtlProfiler::WritePluginsProfile(std::ostream& dest, const PluginsOption
             if (HasFlag(outputs[i].flag, AviUtl::detail::OutputPluginFlag::Builtin))
                 continue;
 
-            WritePluginData(dest, hasher, opt, aviutl_path,
+            WritePluginData(dest, hasher, opt, aviutl_dir,
                 outputs[i].name2, outputs[i].information2, outputs[i].path);
         }
         if (opt.enable_count == 1) dest << "\n";
@@ -114,7 +115,7 @@ void AviUtlProfiler::WritePluginsProfile(std::ostream& dest, const PluginsOption
 
         char buf[MAX_PATH];
         GetModuleFileName(fp->dll_hinst, buf, MAX_PATH);
-        WritePluginData(dest, hasher, opt, aviutl_path,
+        WritePluginData(dest, hasher, opt, aviutl_dir,
             fp->name, fp->information, buf);
     }
     if (opt.enable_count == 1)
@@ -128,7 +129,7 @@ void AviUtlProfiler::WritePluginsProfile(std::ostream& dest, const PluginsOption
             if (HasFlag(colors[i].flag, AviUtl::detail::ColorPluginFlag::Builtin))
                 continue;
 
-            WritePluginData(dest, hasher, opt, aviutl_path,
+            WritePluginData(dest, hasher, opt, aviutl_dir,
                 colors[i].name, colors[i].information, colors[i].path);
         }
     }

@@ -51,7 +51,7 @@ Sha256Hasher::~Sha256Hasher()
     }
 }
 
-std::string Sha256Hasher::getFileHash(const char* path)
+std::string Sha256Hasher::getFileHash(const std::filesystem::path& path)
 {
     ifstream fp(path, ios::in | ios::binary);
     if (!fp.good()) {
