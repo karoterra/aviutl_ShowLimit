@@ -75,4 +75,6 @@ private:
     uint32_t ReadUInt32(size_t offset) const {
         return *reinterpret_cast<uint32_t*>(reinterpret_cast<size_t>(hinst_) + offset);
     }
+
+    void WriteOtherPluginsProfile(std::ostream& dest, const PluginsOption& opt);
 };

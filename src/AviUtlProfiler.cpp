@@ -4,6 +4,7 @@
 #include <string_view>
 #include <vector>
 #include <stdexcept>
+#include <TlHelp32.h>
 
 #include "Sha256Hasher.hpp"
 
@@ -132,5 +133,42 @@ void AviUtlProfiler::WritePluginsProfile(std::ostream& dest, const PluginsOption
             WritePluginData(dest, hasher, opt, aviutl_dir,
                 colors[i].name, colors[i].information, colors[i].path);
         }
+        if (opt.enable_count == 1)
+            dest << "\n";
     }
+
+    WriteOtherPluginsProfile(dest, opt);
+}
+
+void AviUtlProfiler::WriteOtherPluginsProfile(std::ostream& dest, const PluginsOption& opt)
+{
+    dest << kBullet1 << "その他のプラグイン\n";
+
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, NULL);
+    if (snapshot == INVALID_HANDLE_VALUE) {
+        return;
+    }
+
+    MODULEENTRY32 me32{ .dwSize = sizeof(MODULEENTRY32) };
+    if (Module32First(snapshot, &me32) == FALSE) {
+        CloseHandle(snapshot);
+        return;
+    }
+
+    Sha256Hasher hasher;
+    fs::path aviutl_path = GetAviUtlPath();
+    fs::path aviutl_dir = aviutl_path.parent_path();
+    do {
+        fs::path plugin_path = me32.szExePath;
+        if (plugin_path.extension() != ".aul") {
+            continue;
+        }
+
+        WritePluginData(dest, hasher, opt, aviutl_dir,
+            plugin_path.filename().string().c_str(),
+            plugin_path.filename().string().c_str(),
+            plugin_path.string().c_str());
+    } while (Module32Next(snapshot, &me32) != FALSE);
+
+    CloseHandle(snapshot);
 }
