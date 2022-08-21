@@ -134,10 +134,11 @@ bool CreateFilterWindow(FilterPlugin* fp) {
     SetListItem(5, "図形名", g_exedit_profiler.GetFigureUsed(), ExEditProfiler::kFigureMax);
     SetListItem(6, "トランジション名", g_exedit_profiler.GetTransitionUsed(), ExEditProfiler::kTransitionMax);
     SetListItem(7, "EXA/EXO", g_exedit_profiler.GetExaExoUsed(), ExEditProfiler::kExaExoMax);
-    SetListItem(8, "入力プラグイン", g_aviutl_profiler.GetInputNum(), AviUtlProfiler::kInputCountMax);
-    SetListItem(9, "出力プラグイン", g_aviutl_profiler.GetOutputNum(), AviUtlProfiler::kOutputCountMax);
-    SetListItem(10, "フィルタプラグイン", g_aviutl_profiler.GetFilterNum(), AviUtlProfiler::kFilterCountMax);
-    SetListItem(11, "色変換プラグイン", g_aviutl_profiler.GetColorNum(), AviUtlProfiler::kColorCountMax);
+    SetListItem(8, "exedit extension", g_exedit_profiler.GetExtensionUsed(), ExEditProfiler::kExtensionMax);
+    SetListItem(9, "入力プラグイン", g_aviutl_profiler.GetInputNum(), AviUtlProfiler::kInputCountMax);
+    SetListItem(10, "出力プラグイン", g_aviutl_profiler.GetOutputNum(), AviUtlProfiler::kOutputCountMax);
+    SetListItem(11, "フィルタプラグイン", g_aviutl_profiler.GetFilterNum(), AviUtlProfiler::kFilterCountMax);
+    SetListItem(12, "色変換プラグイン", g_aviutl_profiler.GetColorNum(), AviUtlProfiler::kColorCountMax);
 
     // プラグイングループ
     HWND hwnd = CreateWindowEx(
