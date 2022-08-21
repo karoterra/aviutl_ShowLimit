@@ -17,6 +17,7 @@ add_library(ShowLimit SHARED
     src/ExEditProfiler.cpp
     src/NamesBuffer.hpp
     src/ScriptsOption.hpp
+    src/LanguagePlugin.hpp
 )
 target_include_directories(ShowLimit PRIVATE
     ${AVIUTL_INCLUDE_DIR}

@@ -6,6 +6,7 @@
 #include <aviutl.hpp>
 
 #include "PluginsOption.hpp"
+#include "LanguagePlugin.hpp"
 
 class AviUtlProfiler
 {
@@ -25,6 +26,9 @@ public:
     static constexpr size_t kColorArrayOffset = 0xb5ac8;
     static constexpr size_t kColorCountOffset = 0xb5ac0;
     static constexpr size_t kColorCountMax = 32;
+
+    static constexpr size_t kLanguageArrayOffset = 0x2d5660;
+    static constexpr size_t kLanguageCountMax = 16;
 
     void Init(AviUtl::FilterPlugin* filter) {
         exfunc_ = filter->exfunc;
@@ -59,6 +63,18 @@ public:
         return ReadUInt32(kColorCountOffset);
     }
 
+    size_t GetLanguageNum() const {
+        if (!IsSupported()) return 0;
+
+        auto langs = GetPtr<LanguagePlugin>(kLanguageArrayOffset);
+        for (size_t i = 0; i < kLanguageCountMax; i++) {
+            if (langs[i].name[0] == '\0') {
+                return i;
+            }
+        }
+        return kLanguageCountMax;
+    }
+
     std::string GetAviUtlPath() const {
         char path[MAX_PATH];
         GetModuleFileName(hinst_, path, MAX_PATH);
@@ -72,8 +88,24 @@ private:
     AviUtl::ExFunc* exfunc_;
     HINSTANCE hinst_;
 
+    template<typename T>
+    T* GetPtr(size_t offset) const {
+        return reinterpret_cast<T*>(reinterpret_cast<size_t>(hinst_) + offset);
+    }
+
     uint32_t ReadUInt32(size_t offset) const {
         return *reinterpret_cast<uint32_t*>(reinterpret_cast<size_t>(hinst_) + offset);
+    }
+
+    bool IsLanguagePlugin(const char* path) const {
+        auto langs = GetPtr<LanguagePlugin>(kLanguageArrayOffset);
+        auto lang_num = GetLanguageNum();
+        for (size_t i = 1; i < lang_num; i++) {
+            if (strcmp(path, langs[i].path) == 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     void WriteOtherPluginsProfile(std::ostream& dest, const PluginsOption& opt);

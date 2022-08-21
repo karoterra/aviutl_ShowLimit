@@ -135,6 +135,16 @@ void AviUtlProfiler::WritePluginsProfile(std::ostream& dest, const PluginsOption
         }
         if (opt.enable_count == 1)
             dest << "\n";
+
+        dest << kBullet1 << "言語拡張リソースプラグイン\n";
+        auto langs = GetPtr<LanguagePlugin>(kLanguageArrayOffset);
+        auto lang_num = GetLanguageNum();
+        for (size_t i = 1; i < lang_num; i++) {
+            WritePluginData(dest, hasher, opt, aviutl_dir,
+                langs[i].name, langs[i].information, langs[i].path);
+        }
+        if (opt.enable_count == 1)
+            dest << "\n";
     }
 
     WriteOtherPluginsProfile(dest, opt);
@@ -160,7 +170,7 @@ void AviUtlProfiler::WriteOtherPluginsProfile(std::ostream& dest, const PluginsO
     fs::path aviutl_dir = aviutl_path.parent_path();
     do {
         fs::path plugin_path = me32.szExePath;
-        if (plugin_path.extension() != ".aul") {
+        if (plugin_path.extension() != ".aul" || IsLanguagePlugin(plugin_path.string().c_str())) {
             continue;
         }
 
