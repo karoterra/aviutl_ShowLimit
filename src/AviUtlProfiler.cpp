@@ -79,11 +79,9 @@ void AviUtlProfiler::WritePluginsProfile(std::ostream& dest, const PluginsOption
     if (opt.enable_count == 0)
         return;
 
-    auto base = reinterpret_cast<size_t>(hinst_);
-
     if (IsSupported()) {
         dest << kBullet1 << "入力プラグイン\n";
-        auto inputs = reinterpret_cast<AviUtl::InputPlugin*>(base + kInputArrayOffset);
+        auto inputs = GetPtr<AviUtl::InputPlugin>(kInputArrayOffset);
         auto input_num = GetInputNum();
         for (size_t i = 0; i < input_num; i++) {
             if (HasFlag(inputs[i].flag, AviUtl::detail::InputPluginFlag::Builtin))
@@ -95,7 +93,7 @@ void AviUtlProfiler::WritePluginsProfile(std::ostream& dest, const PluginsOption
         if (opt.enable_count == 1) dest << "\n";
 
         dest << kBullet1 << "出力プラグイン\n";
-        auto outputs = reinterpret_cast<AviUtl::OutputPlugin*>(base + kOutputArrayOffset);
+        auto outputs = GetPtr<AviUtl::OutputPlugin>(kOutputArrayOffset);
         auto output_num = GetOutputNum();
         for (size_t i = 0; i < output_num; i++) {
             if (HasFlag(outputs[i].flag, AviUtl::detail::OutputPluginFlag::Builtin))
@@ -124,7 +122,7 @@ void AviUtlProfiler::WritePluginsProfile(std::ostream& dest, const PluginsOption
 
     if (IsSupported()) {
         dest << kBullet1 << "色変換プラグイン\n";
-        auto colors = reinterpret_cast<AviUtl::ColorPlugin*>(base + kColorArrayOffset);
+        auto colors = GetPtr<AviUtl::ColorPlugin>(kColorArrayOffset);
         auto color_num = GetColorNum();
         for (size_t i = 0; i < color_num; i++) {
             if (HasFlag(colors[i].flag, AviUtl::detail::ColorPluginFlag::Builtin))
@@ -132,6 +130,16 @@ void AviUtlProfiler::WritePluginsProfile(std::ostream& dest, const PluginsOption
 
             WritePluginData(dest, hasher, opt, aviutl_dir,
                 colors[i].name, colors[i].information, colors[i].path);
+        }
+        if (opt.enable_count == 1)
+            dest << "\n";
+
+        dest << kBullet1 << "言語拡張リソースプラグイン\n";
+        auto langs = GetPtr<LanguagePlugin>(kLanguageArrayOffset);
+        auto lang_num = GetLanguageNum();
+        for (size_t i = 1; i < lang_num; i++) {
+            WritePluginData(dest, hasher, opt, aviutl_dir,
+                langs[i].name, langs[i].information, langs[i].path);
         }
         if (opt.enable_count == 1)
             dest << "\n";
@@ -160,7 +168,7 @@ void AviUtlProfiler::WriteOtherPluginsProfile(std::ostream& dest, const PluginsO
     fs::path aviutl_dir = aviutl_path.parent_path();
     do {
         fs::path plugin_path = me32.szExePath;
-        if (plugin_path.extension() != ".aul") {
+        if (plugin_path.extension() != ".aul" || IsLanguagePlugin(plugin_path.string().c_str())) {
             continue;
         }
 

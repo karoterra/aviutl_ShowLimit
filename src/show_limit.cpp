@@ -139,6 +139,7 @@ bool CreateFilterWindow(FilterPlugin* fp) {
     SetListItem(10, "出力プラグイン", g_aviutl_profiler.GetOutputNum(), AviUtlProfiler::kOutputCountMax);
     SetListItem(11, "フィルタプラグイン", g_aviutl_profiler.GetFilterNum(), AviUtlProfiler::kFilterCountMax);
     SetListItem(12, "色変換プラグイン", g_aviutl_profiler.GetColorNum(), AviUtlProfiler::kColorCountMax);
+    SetListItem(13, "言語拡張リソースプラグイン", g_aviutl_profiler.GetLanguageNum(), AviUtlProfiler::kLanguageCountMax);
 
     // プラグイングループ
     HWND hwnd = CreateWindowEx(
