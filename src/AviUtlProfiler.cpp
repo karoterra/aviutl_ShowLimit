@@ -109,7 +109,7 @@ void AviUtlProfiler::WritePluginsProfile(std::ostream& dest, const PluginsOption
     auto filter_num = GetFilterNum();
     for (size_t i = 0; i < filter_num; i++) {
         auto fp = exfunc_->get_filterp(i);
-        if (HasFlag(fp->flag, AviUtl::detail::FilterPluginFlag::Builtin))
+        if (fp->dll_hinst == NULL)
             continue;
 
         char buf[MAX_PATH];
