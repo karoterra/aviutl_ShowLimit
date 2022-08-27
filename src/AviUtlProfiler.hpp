@@ -30,6 +30,9 @@ public:
     static constexpr size_t kLanguageArrayOffset = 0x2d5660;
     static constexpr size_t kLanguageCountMax = 16;
 
+    static constexpr size_t kMenuItemOffset = 0xa8e3c;
+    static constexpr size_t kMenuItemMax = 256;
+
     void Init(AviUtl::FilterPlugin* filter) {
         exfunc_ = filter->exfunc;
         hinst_ = filter->hinst_parent;
@@ -73,6 +76,11 @@ public:
             }
         }
         return kLanguageCountMax;
+    }
+
+    size_t GetMenuItemNum() const {
+        if (!IsSupported()) return 0;
+        return ReadUInt32(kMenuItemOffset);
     }
 
     std::string GetAviUtlPath() const {
