@@ -24,5 +24,6 @@ target_link_libraries(ShowLimit comctl32 bcrypt)
 target_compile_options(ShowLimit
     PRIVATE
         "$<$<CXX_COMPILER_ID:MSVC>:/source-charset:utf-8>"
+        "$<$<CXX_COMPILER_ID:MSVC>:/execution-charset:shift_jis>"
 )
 set_target_properties(ShowLimit PROPERTIES SUFFIX .auf)
