@@ -1,5 +1,6 @@
 [Bb]uild/
 *.auf
+CMakeUserPresets.json
 
 # User-specific files
 *.rsuser
