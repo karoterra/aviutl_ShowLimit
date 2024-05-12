@@ -1,6 +1,6 @@
 # Credits
 
-## aviutl_exedit_sdk v1
+## aviutl_exedit_sdk v1.2
 
 https://github.com/ePi5131/aviutl_exedit_sdk
 

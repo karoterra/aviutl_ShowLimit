@@ -1,6 +1,6 @@
 [Bb]uild/
-[Vv]endor/
 *.auf
+CMakeUserPresets.json
 
 # User-specific files
 *.rsuser

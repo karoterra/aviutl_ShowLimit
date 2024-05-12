@@ -1,7 +1,5 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.21)
 project(aviutl_ShowLimit)
-
-set(AVIUTL_INCLUDE_DIR "vendor" CACHE PATH "AviUtl Plugin SDK include dir")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -20,8 +18,12 @@ add_library(ShowLimit SHARED
     src/LanguagePlugin.hpp
 )
 target_include_directories(ShowLimit PRIVATE
-    ${AVIUTL_INCLUDE_DIR}
-    ${AVIUTL_INCLUDE_DIR}/aviutl_exedit_sdk
+    vendor/aviutl_exedit_sdk
 )
 target_link_libraries(ShowLimit comctl32 bcrypt)
+target_compile_options(ShowLimit
+    PRIVATE
+        "$<$<CXX_COMPILER_ID:MSVC>:/source-charset:utf-8>"
+        "$<$<CXX_COMPILER_ID:MSVC>:/execution-charset:shift_jis>"
+)
 set_target_properties(ShowLimit PROPERTIES SUFFIX .auf)

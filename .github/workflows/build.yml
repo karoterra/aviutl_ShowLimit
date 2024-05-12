@@ -1,0 +1,35 @@
+name: Build Windows Plugin
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Set up MSVC
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Configure CMake
+      run: cmake --preset default
+
+    - name: Build
+      run: cmake --build build --preset release
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: aviutl_ShowLimit
+        path: build/Release/ShowLimit.auf
