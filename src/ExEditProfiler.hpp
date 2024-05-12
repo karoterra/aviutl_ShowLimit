@@ -37,6 +37,10 @@ public:
     static constexpr size_t kExtensionOffset = 0x14cb58;
     static constexpr size_t kExtensionMax = 0x800;
 
+    static constexpr size_t kExEditFilterArrayOffset = 0x187c98;
+    static constexpr size_t kExEditFilterCountOffset = 0x146248;
+    static constexpr size_t kExEditFilterMax = 512;
+
     static constexpr std::string_view kExEditName{ "拡張編集" };
     static constexpr std::string_view kExEdit92{ "拡張編集(exedit) version 0.92 by ＫＥＮくん" };
 
@@ -93,6 +97,11 @@ public:
         return GetNamesBufferUsed(kExtensionOffset, kExtensionMax);
     }
 
+    size_t GetExEditFilterNum() const {
+        if (!IsSupported()) return 0;
+        return ReadUInt32(kExEditFilterCountOffset);
+    }
+
     void WriteProfile(std::ostream& dest, const ScriptsOption& opt);
 
 private:
@@ -116,6 +125,17 @@ private:
         if (!IsSupported()) return 0;
         auto buf = GetNamesBuffer(offset);
         return GetNamesBufferLength(buf, size);
+    }
+
+    template<typename T>
+    T* GetPtr(size_t offset) const {
+        if (!IsSupported()) return nullptr;
+        return reinterpret_cast<T*>(reinterpret_cast<size_t>(exedit_->dll_hinst) + offset);
+    }
+
+    uint32_t ReadUInt32(size_t offset) const {
+        if (!IsSupported()) return 0;
+        return *GetPtr<uint32_t>(offset);
     }
 
     void WriteExEditDetail(std::ostream& dest);

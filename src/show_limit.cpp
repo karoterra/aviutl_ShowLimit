@@ -5,6 +5,8 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <array>
+#include <tuple>
 
 #include <aviutl.hpp>
 
@@ -126,21 +128,27 @@ bool CreateFilterWindow(FilterPlugin* fp) {
     }
 
     // items
-    SetListItem(0, "スクリプト名 ANM", g_exedit_profiler.GetAnmUsed(), ExEditProfiler::kAnmMax);
-    SetListItem(1, "スクリプト名 OBJ", g_exedit_profiler.GetObjUsed(), ExEditProfiler::kObjMax);
-    SetListItem(2, "スクリプト名 SCN", g_exedit_profiler.GetScnUsed(), ExEditProfiler::kScnMax);
-    SetListItem(3, "スクリプト名 CAM", g_exedit_profiler.GetCamUsed(), ExEditProfiler::kCamMax);
-    SetListItem(4, "スクリプト名 TRA", g_exedit_profiler.GetTraUsed(), ExEditProfiler::kTraMax);
-    SetListItem(5, "図形名", g_exedit_profiler.GetFigureUsed(), ExEditProfiler::kFigureMax);
-    SetListItem(6, "トランジション名", g_exedit_profiler.GetTransitionUsed(), ExEditProfiler::kTransitionMax);
-    SetListItem(7, "EXA/EXO", g_exedit_profiler.GetExaExoUsed(), ExEditProfiler::kExaExoMax);
-    SetListItem(8, "exedit extension", g_exedit_profiler.GetExtensionUsed(), ExEditProfiler::kExtensionMax);
-    SetListItem(9, "入力プラグイン", g_aviutl_profiler.GetInputNum(), AviUtlProfiler::kInputCountMax);
-    SetListItem(10, "出力プラグイン", g_aviutl_profiler.GetOutputNum(), AviUtlProfiler::kOutputCountMax);
-    SetListItem(11, "フィルタプラグイン", g_aviutl_profiler.GetFilterNum(), AviUtlProfiler::kFilterCountMax);
-    SetListItem(12, "色変換プラグイン", g_aviutl_profiler.GetColorNum(), AviUtlProfiler::kColorCountMax);
-    SetListItem(13, "言語拡張リソースプラグイン", g_aviutl_profiler.GetLanguageNum(), AviUtlProfiler::kLanguageCountMax);
-    SetListItem(14, "add_menu_item", g_aviutl_profiler.GetMenuItemNum(), AviUtlProfiler::kMenuItemMax);
+    const auto items = std::to_array<std::tuple<const char *, size_t, size_t>>({
+        {"スクリプト名 ANM", g_exedit_profiler.GetAnmUsed(), ExEditProfiler::kAnmMax},
+        {"スクリプト名 OBJ", g_exedit_profiler.GetObjUsed(), ExEditProfiler::kObjMax},
+        {"スクリプト名 SCN", g_exedit_profiler.GetScnUsed(), ExEditProfiler::kScnMax},
+        {"スクリプト名 CAM", g_exedit_profiler.GetCamUsed(), ExEditProfiler::kCamMax},
+        {"スクリプト名 TRA", g_exedit_profiler.GetTraUsed(), ExEditProfiler::kTraMax},
+        {"図形名", g_exedit_profiler.GetFigureUsed(), ExEditProfiler::kFigureMax},
+        {"トランジション名", g_exedit_profiler.GetTransitionUsed(), ExEditProfiler::kTransitionMax},
+        {"EXA/EXO", g_exedit_profiler.GetExaExoUsed(), ExEditProfiler::kExaExoMax},
+        {"exedit extension", g_exedit_profiler.GetExtensionUsed(), ExEditProfiler::kExtensionMax},
+        {"拡張編集フィルタ", g_exedit_profiler.GetExEditFilterNum(), ExEditProfiler::kExEditFilterMax},
+        {"入力プラグイン", g_aviutl_profiler.GetInputNum(), AviUtlProfiler::kInputCountMax},
+        {"出力プラグイン", g_aviutl_profiler.GetOutputNum(), AviUtlProfiler::kOutputCountMax},
+        {"フィルタプラグイン", g_aviutl_profiler.GetFilterNum(), AviUtlProfiler::kFilterCountMax},
+        {"色変換プラグイン", g_aviutl_profiler.GetColorNum(), AviUtlProfiler::kColorCountMax},
+        {"言語拡張リソースプラグイン", g_aviutl_profiler.GetLanguageNum(), AviUtlProfiler::kLanguageCountMax},
+        {"add_menu_item", g_aviutl_profiler.GetMenuItemNum(), AviUtlProfiler::kMenuItemMax},
+    });
+    for (size_t i = 0; i < items.size(); i++) {
+        SetListItem(i, std::get<0>(items[i]), std::get<1>(items[i]), std::get<2>(items[i]));
+    }
 
     // プラグイングループ
     HWND hwnd = CreateWindowEx(
