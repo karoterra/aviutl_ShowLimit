@@ -16,6 +16,7 @@ add_library(ShowLimit SHARED
     src/NamesBuffer.hpp
     src/ScriptsOption.hpp
     src/LanguagePlugin.hpp
+    src/ProfileHelper.hpp
 )
 target_include_directories(ShowLimit PRIVATE
     vendor/aviutl_exedit_sdk

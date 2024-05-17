@@ -1,11 +1,13 @@
 #pragma once
 
 #include <ostream>
+#include <filesystem>
 #include <string_view>
 
 #include <aviutl.hpp>
 
 #include "ScriptsOption.hpp"
+#include "PluginsOption.hpp"
 
 class ExEditProfiler
 {
@@ -103,6 +105,8 @@ public:
     }
 
     void WriteProfile(std::ostream& dest, const ScriptsOption& opt);
+
+    void WriteExEditFilterProfile(std::ostream& dest, const std::filesystem::path& aviutl_dir, const PluginsOption& opt);
 
 private:
     AviUtl::FilterPlugin* exedit_;
