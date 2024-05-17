@@ -6,6 +6,13 @@
 
 ## 導入方法
 
+0. プラグインの動作には Microsoft Visual C++ 再頒布可能パッケージがインストールされている必要があります。お使いの PC にまだインストールされていない場合はあらかじめインストールしてください。
+   - アーキテクチャは x86 用のものが必要です。
+   - バージョンは Visual Studio 2022 に対応したものが必要です。
+     - 例えば Microsoft Visual C++ 2015-2022 再頒布可能パッケージがインストールされていれば問題ありません。
+   - インストーラのダウンロードやインストール方法については以下を参照してください。
+     - [サポートされている最新の Visual C++ 再頒布可能パッケージのダウンロード | Microsoft Learn](https://learn.microsoft.com/ja-JP/cpp/windows/latest-supported-vc-redist?view=msvc-170)
+     - [Visual C++ 再頒布可能パッケージ - /AviUtl](https://scrapbox.io/aviutl/Visual_C++_%E5%86%8D%E9%A0%92%E5%B8%83%E5%8F%AF%E8%83%BD%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8)
 1. [Releases](https://github.com/karoterra/aviutl_ShowLimit/releases/)
    最新版の ZIP ファイルをダウンロードしてください。
 2. ZIP ファイルを展開し、以下のファイルを AviUtl の `plugins` フォルダに配置してください。
