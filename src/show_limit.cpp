@@ -7,6 +7,7 @@
 #include <string>
 #include <array>
 #include <tuple>
+#include <filesystem>
 
 #include <aviutl.hpp>
 
@@ -14,6 +15,7 @@
 #include "AviUtlProfiler.hpp"
 #include "ExEditProfiler.hpp"
 
+namespace fs = std::filesystem;
 using namespace std::literals::string_literals;
 using AviUtl::FilterPlugin;
 
@@ -313,6 +315,10 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, AviUtl:
             std::ostringstream os;
             auto opt = GetPluginsOption();
             g_aviutl_profiler.WritePluginsProfile(os, opt);
+
+            fs::path aviutl_path = g_aviutl_profiler.GetAviUtlPath();
+            fs::path aviutl_dir = aviutl_path.parent_path();
+            g_exedit_profiler.WriteExEditFilterProfile(os, aviutl_dir, opt);
             CopyToClipboard(os.str());
             break;
         }
@@ -323,6 +329,10 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, AviUtl:
                     std::ofstream ofs(name);
                     auto opt = GetPluginsOption();
                     g_aviutl_profiler.WritePluginsProfile(ofs, opt);
+
+                    fs::path aviutl_path = g_aviutl_profiler.GetAviUtlPath();
+                    fs::path aviutl_dir = aviutl_path.parent_path();
+                    g_exedit_profiler.WriteExEditFilterProfile(ofs, aviutl_dir, opt);
                 }
                 catch (const std::exception& e) {
                     std::ostringstream os;

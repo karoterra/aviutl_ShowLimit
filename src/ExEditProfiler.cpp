@@ -1,18 +1,16 @@
 #include "ExEditProfiler.hpp"
 
 #include <algorithm>
-#include <filesystem>
 #include <vector>
+#include <iomanip>
+
+#include <exedit.hpp>
 
 #include "Sha256Hasher.hpp"
 #include "NamesBuffer.hpp"
+#include "ProfileHelper.hpp"
 
 namespace fs = std::filesystem;
-
-constexpr std::string_view kBullet1{ "■" };
-constexpr std::string_view kBullet2{ "●" };
-constexpr std::string_view kBulletE{ "　" };
-constexpr std::string_view kIndent{ "　" };
 
 constexpr std::string_view kLuaLibName{ "lua51.dll" };
 
@@ -180,4 +178,24 @@ void ExEditProfiler::WriteExEditDetail(std::ostream& dest)
     dest << kIndent << kLuaLibName << "\n";
     fs::path lua_path = exedit_path.parent_path().append(kLuaLibName);
     dest << kIndent << kIndent << "SHA256: " << hasher.getFileHash(lua_path.string().c_str()) << "\n";
+}
+
+void ExEditProfiler::WriteExEditFilterProfile(std::ostream& dest, const std::filesystem::path& aviutl_dir, const PluginsOption& opt)
+{
+    if (!IsSupported()) return;
+
+    dest << kBullet1 << "拡張編集フィルタ\n";
+
+    const auto filters = GetPtr<ExEdit::Filter*>(kExEditFilterArrayOffset);
+    const auto filter_num = GetExEditFilterNum();
+    Sha256Hasher hasher;
+    for (size_t i = 0; i < filter_num; i++) {
+        const auto filter = filters[i];
+        if (!HasFlag(filter->flag, ExEdit::Filter::Flag::ExEditFilter) || !filter->dll_hinst)
+            continue;
+
+        char buf[MAX_PATH];
+        GetModuleFileName(reinterpret_cast<HMODULE>(filter->dll_hinst), buf, MAX_PATH);
+        WritePluginData(dest, hasher, opt, aviutl_dir, filter->name, filter->information, buf);
+    }
 }
