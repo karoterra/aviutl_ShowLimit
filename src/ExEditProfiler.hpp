@@ -5,6 +5,7 @@
 #include <string_view>
 
 #include <aviutl.hpp>
+#include <exedit.hpp>
 
 #include "ScriptsOption.hpp"
 #include "PluginsOption.hpp"
@@ -42,6 +43,9 @@ public:
     static constexpr size_t kExEditFilterArrayOffset = 0x187c98;
     static constexpr size_t kExEditFilterCountOffset = 0x146248;
     static constexpr size_t kExEditFilterMax = 512;
+
+    static constexpr size_t kSusiePluginOffset = 0x2321f0;
+    static constexpr size_t kSusiePluginMax = 32;
 
     static constexpr std::string_view kExEditName{ "拡張編集" };
     static constexpr std::string_view kExEdit92{ "拡張編集(exedit) version 0.92 by ＫＥＮくん" };
@@ -104,9 +108,23 @@ public:
         return ReadUInt32(kExEditFilterCountOffset);
     }
 
+    size_t GetSusiePluginNum() const {
+        if (!IsSupported()) return 0;
+        const auto spi = GetPtr<ExEdit::structSPI>(kSusiePluginOffset);
+        size_t count = 0;
+        for (size_t i = 0; i < kSusiePluginMax; i++) {
+            if (spi[i].hmodule != NULL) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     void WriteProfile(std::ostream& dest, const ScriptsOption& opt);
 
     void WriteExEditFilterProfile(std::ostream& dest, const std::filesystem::path& aviutl_dir, const PluginsOption& opt);
+
+    void WriteSusiePluginProfile(std::ostream& dest, const std::filesystem::path& aviutl_dir, const PluginsOption& opt);
 
 private:
     AviUtl::FilterPlugin* exedit_;
