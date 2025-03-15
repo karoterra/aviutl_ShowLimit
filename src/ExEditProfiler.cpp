@@ -199,3 +199,20 @@ void ExEditProfiler::WriteExEditFilterProfile(std::ostream& dest, const std::fil
         WritePluginData(dest, hasher, opt, aviutl_dir, filter->name, filter->information, buf);
     }
 }
+
+void ExEditProfiler::WriteSusiePluginProfile(std::ostream& dest, const std::filesystem::path& aviutl_dir, const PluginsOption& opt)
+{
+    if (!IsSupported()) return;
+
+    dest << kBullet1 << "Susieプラグイン\n";
+
+    Sha256Hasher hasher;
+    const auto spi = GetPtr<ExEdit::structSPI>(kSusiePluginOffset);
+    for (size_t i = 0; i < kSusiePluginMax; i++) {
+        if (spi[i].hmodule == NULL) continue;
+
+        char buf[MAX_PATH];
+        GetModuleFileName(spi[i].hmodule, buf, MAX_PATH);
+        WritePluginData(dest, hasher, opt, aviutl_dir, spi[i].information, spi[i].extension, buf);
+    }
+}

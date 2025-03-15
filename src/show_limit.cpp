@@ -141,6 +141,7 @@ bool CreateFilterWindow(FilterPlugin* fp) {
         {"EXA/EXO", g_exedit_profiler.GetExaExoUsed(), ExEditProfiler::kExaExoMax},
         {"exedit extension", g_exedit_profiler.GetExtensionUsed(), ExEditProfiler::kExtensionMax},
         {"拡張編集フィルタ", g_exedit_profiler.GetExEditFilterNum(), ExEditProfiler::kExEditFilterMax},
+        {"Susieプラグイン", g_exedit_profiler.GetSusiePluginNum(), ExEditProfiler::kSusiePluginMax},
         {"入力プラグイン", g_aviutl_profiler.GetInputNum(), AviUtlProfiler::kInputCountMax},
         {"出力プラグイン", g_aviutl_profiler.GetOutputNum(), AviUtlProfiler::kOutputCountMax},
         {"フィルタプラグイン", g_aviutl_profiler.GetFilterNum(), AviUtlProfiler::kFilterCountMax},
@@ -319,6 +320,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, AviUtl:
             fs::path aviutl_path = g_aviutl_profiler.GetAviUtlPath();
             fs::path aviutl_dir = aviutl_path.parent_path();
             g_exedit_profiler.WriteExEditFilterProfile(os, aviutl_dir, opt);
+            g_exedit_profiler.WriteSusiePluginProfile(os, aviutl_dir, opt);
             CopyToClipboard(os.str());
             break;
         }
@@ -333,6 +335,7 @@ BOOL func_WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, AviUtl:
                     fs::path aviutl_path = g_aviutl_profiler.GetAviUtlPath();
                     fs::path aviutl_dir = aviutl_path.parent_path();
                     g_exedit_profiler.WriteExEditFilterProfile(ofs, aviutl_dir, opt);
+                    g_exedit_profiler.WriteSusiePluginProfile(ofs, aviutl_dir, opt);
                 }
                 catch (const std::exception& e) {
                     std::ostringstream os;
